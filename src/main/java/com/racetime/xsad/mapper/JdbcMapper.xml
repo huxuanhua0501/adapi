@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.racetime.xsad.dao.JdbcDao">
+
+	
+	<select id="getSspAppType" resultType="java.util.Map">
+		SELECT a.id app_id,d.value app_type FROM ssp_app a,dic_app d WHERE a.dic_app_id=d.id and a.status=2
+	</select>
+	
+	<resultMap id="relationMap" type="java.util.Map">
+		<result column="ssp_adslot_id" property="ssp_adslot_id" jdbcType="VARCHAR" />
+		<result column="adx_adslot_id" property="adx_adslot_id" jdbcType="VARCHAR" />
+	</resultMap>
+	<select id="getAdslotRelation" resultMap="relationMap">
+		SELECT 
+		  ssp.id ssp_adslot_id,
+		  adx.channel_adslot_id adx_adslot_id 
+		FROM
+		  adslot_relation r,
+		  adx_adslot adx,
+		  ssp_adslot ssp 
+		WHERE r.adx_adslot_id = adx.id
+		  AND adx.state = 1 
+		  AND r.ssp_adslot_id = ssp.id 
+		  AND ssp.status = 1 
+	</select>
+
+	<resultMap id="thirdInfoMap" type="com.racetime.xsad.model.ThirdInfo">
+		<result column="adx_adslot_id" property="adx_adslot_id" jdbcType="VARCHAR" />
+		<result column="adslot_id" property="adslot_id" jdbcType="VARCHAR" />
+		<result column="app_id" property="app_id" jdbcType="VARCHAR" />
+		<result column="request_url" property="request_url" jdbcType="VARCHAR" />
+		<result column="adx_devicegroup_id" property="adx_devicegroup_id" jdbcType="VARCHAR" />
+		<result column="app_version_major" property="app_version_major" jdbcType="INTEGER" />
+		<result column="app_version_micro" property="app_version_micro" jdbcType="INTEGER" />
+		<result column="app_version_minor" property="app_version_minor" jdbcType="INTEGER" />
+		<result column="price" property="price" jdbcType="DOUBLE" />
+		<result column="channel_code" property="channel_code" jdbcType="VARCHAR" />
+		<result column="channel_id" property="channel_id" jdbcType="VARCHAR" />
+	</resultMap>
+	<select id="getThirdInfos" resultMap="thirdInfoMap">
+		SELECT 
+		  ad.id adx_adslot_id,
+		  ad.channel_adslot_id adslot_id,
+		  ad.floor_price price,
+		  app.id app_id,
+		  g.adx_devicegroup_id,
+		  c.request_url,
+		  c.app_version_major,
+		  c.app_version_micro,
+		  c.app_version_minor,
+		  c.code channel_code,
+		  c.id channel_id
+		FROM
+		  adx_adslot ad,
+		  adx_app_devicegroup g,
+		  adx_app app,
+		  ad_channel c 
+		WHERE ad.id=g.adx_adslot_id
+		  AND ad.state = 1 
+		  AND g.adx_app_id = app.id 
+		  AND app.status = 2 
+		  AND app.channel_id = c.id 
+		  AND c.status = 1 
+	</select>
+	
+	<resultMap id="strategeMap" type="com.racetime.xsad.model.Strategy">
+		<id column="strategy_id" property="strategy_id" jdbcType="VARCHAR" />
+		<result column="adslot_id" property="adslot_id" jdbcType="VARCHAR" />
+		<result column="app_id" property="app_id" jdbcType="VARCHAR" />
+		<result column="citys" property="citys" jdbcType="VARCHAR" />
+		<result column="scene" property="scene" jdbcType="VARCHAR" />
+		<result column="times" property="times" jdbcType="VARCHAR" />
+		<result column="total" property="total" jdbcType="INTEGER" />
+		<result column="price" property="price" jdbcType="DOUBLE" />
+		<result column="material_ids" property="material_ids" jdbcType="VARCHAR" />
+		<result column="serving_Info" property="serving_Info" jdbcType="VARCHAR" />
+		<result column="executeNum" property="executeNum" jdbcType="INTEGER" />
+	</resultMap>
+	<select id="getStrategys" resultMap="strategeMap">
+		SELECT 
+		  s.id strategy_id,
+		  s.adslot_id,
+		  s.appid app_id,
+		  s.city citys,
+		  s.scene,
+		  s.week_and_hour times,
+		  s.num*1000 total,
+		  s.price,
+		  s.material material_ids ,
+		  s.serving_Info,
+		  r.executeNum
+		FROM
+		  ad_serving s 
+		  LEFT JOIN 
+		    (SELECT 
+		      return_success_num executeNum,
+		      ad_serving_id 
+		    FROM
+		      adx_report 
+		    WHERE date_day = CURDATE() 
+		      AND date_hour = DATE_FORMAT(NOW(), '%H')) r 
+		    ON s.id = r.ad_serving_id 
+		WHERE s.status = 1 
+			AND CURDATE() BETWEEN s.sdate AND s.edate 
+	</select>
+	
+	<resultMap id="materialMap" type="com.racetime.xsad.model.ResponseAd">
+		<result column="ad_url" property="ad_url" jdbcType="VARCHAR" />
+		<result column="adx_adslot_id" property="adx_adslot_id" jdbcType="VARCHAR" />
+		<result column="ad_width" property="ad_width" jdbcType="INTEGER" />
+		<result column="ad_height" property="ad_height" jdbcType="INTEGER" />
+		<result column="ad_size" property="ad_size" jdbcType="INTEGER" />
+		<result column="ad_title" property="ad_title" jdbcType="VARCHAR" />
+		<result column="video_duration" property="video_duration" jdbcType="INTEGER" />
+		<result column="ad_type" property="ad_type" jdbcType="VARCHAR" />
+	</resultMap>
+	<select id="getMaterials" resultMap="materialMap" >
+		select 
+		  material_url ad_url,
+		  adx_adslot_id,
+		  ad_width,
+		  ad_height,
+		  ad_size,
+		  title ad_title,
+		  video_duration,
+		  type ad_type 
+		from
+		  ad_material 
+		<where>
+			status=1 
+			<if test="_parameter != null and _parameter.size()>0">
+				and id in 
+				<foreach collection="array" open="(" separator="," close=")" item="item">
+		            #{item}
+		        </foreach>
+			</if>
+		</where> 
+	</select>
+	
+	<resultMap id="deviceMap" type="com.racetime.xsad.model.ssp.Device">
+		<id column="device_id" property="device_id" jdbcType="INTEGER" />
+		<result column="ssp_devicegroup_id" property="ssp_devicegroup_id" jdbcType="INTEGER" />
+		<result column="adx_devicegroup_id" property="adx_devicegroup_id" jdbcType="INTEGER" />
+		<result column="city_code" property="city_code" jdbcType="INTEGER" />
+		<result column="scene_id" property="scene_id" jdbcType="INTEGER" />
+	</resultMap>
+	<select id="getDevices" resultMap="deviceMap">
+		SELECT device_id,ssp_devicegroup_id,adx_devicegroup_id,city_code,scene_id FROM ad_device
+	</select>
+	
+	<select id="getAdslotDeviceRelation" resultType="java.util.Map">
+		SELECT ssp_adslot_id,device_id,adx_adslot_id FROM adslot_device_relation
+	</select>
+	
+</mapper>

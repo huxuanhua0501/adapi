@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="true" scanPeriod="3 seconds">
+    
+     <define  name="custom" class="com.racetime.xsad.util.LogbackCustom" />
+     
+    <property name="CATALINA_BASE" value="/usr/local/logs/adx"></property>
+
+    <!-- 控制台输出 -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder charset="UTF-8">
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+        <!-- 下面为配置只输出error级别的日志 -->  
+        <!-- <filter class="ch.qos.logback.classic.filter.LevelFilter">  
+            <level>ERROR</level>  
+            <onMatch>ACCEPT</onMatch>  
+            <onMismatch>DENY</onMismatch>  
+        </filter> -->
+    </appender>
+    
+    <appender name="CUSTOM" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${CATALINA_BASE}/adapi.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- daily rollover -->
+            <fileNamePattern>${CATALINA_BASE}/adapi_log/adapi_${custom}_%d{yyyy-MM-dd-HH-mm}.log</fileNamePattern>
+        </rollingPolicy>
+        <encoder charset="UTF-8">
+            <pattern>%msg%n</pattern>
+        </encoder>
+        <!-- 下面为配置只输出info级别的日志 -->  
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">  
+            <level>INFO</level>  
+            <onMatch>ACCEPT</onMatch>  
+            <onMismatch>DENY</onMismatch>  
+        </filter>
+    </appender>
+    
+     <!-- 只用保存输出error级别的日志 -->  
+    <appender name="ERROR" class="ch.qos.logback.core.rolling.RollingFileAppender">  
+        <file>${CATALINA_BASE}/error.log</file>  
+        <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">  
+            <fileNamePattern>${CATALINA_BASE}/error.%i.log</fileNamePattern>  
+            <minIndex>1</minIndex>  
+        	<maxIndex>30</maxIndex>
+        </rollingPolicy>  
+        
+        <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">  
+	        <maxFileSize>100MB</maxFileSize>  
+	    </triggeringPolicy>
+	    
+        <encoder charset="UTF-8">  
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>  
+        </encoder>  
+        <!-- 下面为配置只输出error级别的日志 -->  
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">  
+            <level>ERROR</level>  
+            <onMatch>ACCEPT</onMatch>  
+            <onMismatch>DENY</onMismatch>  
+        </filter>
+        
+    </appender>  
+    
+    <root level="ERROR">
+        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="ERROR" />
+    </root>
+    
+    <!-- 自定义logger -->
+    <logger name="com.racetime.xsad" level="INFO">
+        <appender-ref ref="CUSTOM" />
+    </logger>
+    
+</configuration>
